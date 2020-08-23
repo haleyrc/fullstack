@@ -17,18 +17,47 @@ func main() {
 
 	runner := NewRunner()
 
-	err := runner.StartAPI(ctx)
+	// err := runner.StartAPI(ctx)
+	// fmt.Println(err)
+
+	err := runner.StartClient(ctx)
 	fmt.Println(err)
 }
 
 func NewRunner() *Runner {
+	pw := NewPrefixWriter(os.Stderr, "[rna] ")
+	pw.Color = Magenta
 	return &Runner{
-		out: NewPrefixWriter(os.Stderr, "[rna] "),
+		out: pw,
 	}
 }
 
 type Runner struct {
 	out io.Writer
+}
+
+func (r *Runner) StartClient(ctx context.Context) error {
+	r.log("starting client...")
+
+	cmd := exec.CommandContext(ctx, "npm", "start")
+	cmd.Dir = filepath.Join(".", "client")
+	// TODO (RCH): Make this configurable and default to output of which
+	cmd.Env = []string{
+		// "PATH=/usr/bin",
+		"PATH=" + os.Getenv("PATH"),
+		"APPDATA=" + os.Getenv("APPDATA"),
+	}
+
+	/*
+		pw := NewPrefixWriter(os.Stderr, "[client] ")
+		pw.Color = Yellow
+		cmd.Stdout = pw
+		cmd.Stderr = pw
+	*/
+	cmd.Stdout = os.Stderr
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
 
 func (r *Runner) StartAPI(ctx context.Context) error {
@@ -60,6 +89,7 @@ func (r *Runner) startAPI(ctx context.Context, bin string) error {
 	}
 
 	pw := NewPrefixWriter(os.Stderr, "[api] ")
+	pw.Color = Cyan
 	cmd.Stdout = pw
 	cmd.Stderr = pw
 
@@ -97,6 +127,7 @@ func (r *Runner) BuildAPI(ctx context.Context) (string, error) {
 	}
 
 	pw := NewPrefixWriter(os.Stderr, "[api] ")
+	pw.Color = Cyan
 	cmd.Stdout = pw
 	cmd.Stderr = pw
 
